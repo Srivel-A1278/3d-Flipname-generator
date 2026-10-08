@@ -54,7 +54,7 @@ label{font-size:13px;opacity:.85}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 // ---- YOUR DETAILS: fill these in (leave a field empty to hide it) ----
-const OWNER={brand:'KLINTECH',name:'A.Srivel',phone:'',email:'',year:2026,notes:'All rights reserved.'};
+const OWNER={brand:'SRIVELTECH',name:'A.Srivel',phone:'',email:'srivelmarvel@gmail.com',year:2026,notes:'All rights reserved.'};
 (function(){
   const f=document.getElementById('foot'),add=(t,href)=>{if(f.childNodes.length)f.append(' · ');if(href){const a=document.createElement('a');a.href=href;a.textContent=t;f.append(a)}else f.append(t)};
   if(OWNER.brand)add('Created by '+OWNER.brand);
