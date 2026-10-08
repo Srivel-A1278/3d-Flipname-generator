@@ -25,31 +25,50 @@ button:disabled{opacity:.5}
 #warn button{margin:6px 6px 0 0;font-size:20px;padding:6px 12px}
 .hint{font-size:13px;opacity:.75;margin-top:8px;line-height:1.4}
 label{font-size:13px;opacity:.85}
+select{padding:10px;border-radius:10px;border:1px solid #8884;background:var(--card);color:var(--fg);font-size:15px}
+input[type=range]{flex:1;min-width:90px}
+details{margin-top:8px}summary{cursor:pointer;font-size:14px;padding:6px 0}
+h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;opacity:.65;margin:0 0 6px}
+.sec{margin-top:16px}.wide{width:100%;margin-top:10px}
+details.sec{background:var(--card);border-radius:12px;padding:2px 12px 10px}
+.vbar{position:absolute;z-index:2;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px;padding:6px;border-radius:14px;background:var(--panel);box-shadow:0 4px 16px #0003;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);max-width:96%}
+.vbar button{padding:8px 10px;font-size:13px;white-space:nowrap;background:var(--card)}
+#empty{z-index:1}
+#sc{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.sw{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px}.sw input{width:42px;height:36px}
+#eg{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}#eg button{font-size:22px;padding:4px 8px;line-height:1.2}
 #foot{margin-top:18px;padding-top:12px;border-top:1px solid #8883;font-size:13px;opacity:.8;text-align:center;line-height:1.6}
 #foot a{color:inherit}
 #mm{max-width:80px;flex:none}
-/* Desktop: controls panel on the left, big 3D viewer on the right, background visible around and between them */
+/* Desktop: controls panel on the left (scrolls on its own), viewer on the right exactly the height of the screen */
 @media (min-width:900px){
-  .wrap{display:grid;grid-template-columns:400px 1fr;grid-template-rows:minmax(calc(100vh - 40px),auto);gap:20px;max-width:none;margin:0;padding:20px;min-height:100vh;background:none;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
-  .side{display:block;padding:20px;background:var(--panel);border:1px solid #8886;border-radius:20px;box-shadow:0 8px 30px #0002;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
-  #stage{margin:0;height:auto;min-height:480px;border:1px solid #8886;border-radius:20px;box-shadow:0 8px 30px #0002}
+  .wrap{display:grid;grid-template-columns:400px minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:20px;max-width:none;margin:0;padding:20px;height:100vh;height:100dvh;background:none;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+  body{overflow:hidden}
+  .side{display:block;min-height:0;overflow-y:auto;padding:20px;background:var(--panel);border:1px solid #8886;border-radius:20px;box-shadow:0 8px 30px #0002;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  #stage{margin:0;height:100%;min-height:0;border:1px solid #8886;border-radius:20px;box-shadow:0 8px 30px #0002}
 }
 </style></head><body>
 <div class="wrap">
 <div class="side">
 <h1 class="pre">🔄 Flip Name 3D</h1>
-<div class="row pre"><input type="text" id="a" placeholder="First name" maxlength="14"><input type="text" id="b" placeholder="Second name" maxlength="14"></div>
-<div id="warn" class="pre"></div>
-<div class="row pre"><label for="mm">Height (mm)</label><input type="number" id="mm" value="30" min="15" max="80">
-<label>Letters</label><input type="color" id="c1" value="#1c1c20"><label>Base</label><input type="color" id="c2" value="#f1e9c6">
-<button class="p" id="go">Generate</button></div>
-<div class="row" style="margin-top:0"><button id="va">Name 1</button><button id="vb">Name 2</button><button id="vt">Top</button><button id="sp">Spin</button><button id="rs">Reset</button></div>
+<div class="sec pre"><h2>1 · Names</h2>
+<div class="row"><input type="text" id="a" placeholder="First name" maxlength="24"><input type="text" id="b" placeholder="Second name" maxlength="24"></div>
+<div id="warn"></div></div>
+<div class="sec pre"><h2>2 · Size &amp; colors</h2>
+<div class="row"><label for="mm">Height (mm)</label><input type="number" id="mm" value="30" min="15" max="80"><label>All letters</label><input type="color" id="c1" value="#1c1c20"><label>Base</label><input type="color" id="c2" value="#f1e9c6"></div>
+<button class="p wide" id="go">Generate</button></div>
+<details class="pre sec" id="scd" open><summary>🖌️ Color each letter</summary><div class="hint" id="sch">Press Generate, then pick a color for every letter or emoji.</div><div id="sc"></div></details>
+<details class="pre sec" id="emo"><summary>😀 More emojis</summary><div class="hint">Tap one to insert it where you are typing.</div><div id="eg"></div></details>
+<details class="pre sec" id="txd"><summary>🎨 Texture</summary>
+<div class="row"><label for="tx">Type</label><select id="tx"><option value="">Smooth</option><option value="fuzzy">Fuzzy skin</option><option value="grain">Fine grain</option><option value="ribs">Ribs</option><option value="bumps">Bumps</option></select></div>
+<div id="txr" style="display:none"><div class="row"><label style="min-width:110px">Depth <b id="tdv">0.25</b> mm</label><input type="range" id="td" min="0.05" max="0.6" step="0.05" value="0.25"></div><div class="row"><label style="min-width:110px">Size <b id="tfv">1.0</b> mm</label><input type="range" id="tf" min="0.6" max="3" step="0.1" value="1"></div></div></details>
+<div class="sec"><h2>3 · Download</h2>
 <div class="row"><button class="p" id="dl">Download STL</button><button id="ed">Editable files (Tinkercad / CAD)</button></div>
-<div class="hint" id="info"></div>
+<div class="hint" id="info"></div></div>
+<div class="hint">Drag to orbit, pinch or scroll to zoom, double-tap to reset. Turn the base 90° to read the other name. Type an emoji anywhere in a name to place it exactly. Open the STL in Bambu Studio or any slicer to print. The texture is built into the model's letters (the base stays smooth). For editing in Tinkercad or other CAD, use the editable files (OBJ).</div>
 <div id="foot" style="display:none"></div>
-<div class="hint">Drag to orbit, pinch or scroll to zoom, double-tap to reset. Turn the base 90° to read the other name. Type an emoji anywhere in a name to place it exactly. Open the STL in Bambu Studio or any slicer to print. For editing in Tinkercad or other CAD, use the editable files (OBJ).</div>
 </div>
-<div id="stage"><div id="empty">Enter two names to generate your flip name</div></div>
+<div id="stage"><div id="empty">Enter two names to generate your flip name</div>
+<div class="vbar"><button id="va">Name 1</button><button id="vb">Name 2</button><button id="vt">Top</button><button id="sp">Spin</button><button id="rs">Reset</button></div></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -166,6 +185,52 @@ function cleanMesh(L){
   }
   return {pos:Array.from(p),idx:I2};
 }
+// ---- surface textures (real geometry, so they print in any slicer) ----
+const hs=(x,y,z)=>{let h=Math.imul(x,374761393)^Math.imul(y,668265263)^Math.imul(z,1274126177);h=Math.imul(h^(h>>>13),1103515245);return((h^(h>>>16))>>>0)/4294967296};
+function vn(x,y,z){
+  const X=Math.floor(x),Y=Math.floor(y),Z=Math.floor(z),a=x-X,b=y-Y,c=z-Z,u=a*a*(3-2*a),v=b*b*(3-2*b),w=c*c*(3-2*c),l=(p,q,t)=>p+(q-p)*t;
+  return l(l(l(hs(X,Y,Z),hs(X+1,Y,Z),u),l(hs(X,Y+1,Z),hs(X+1,Y+1,Z),u),v),l(l(hs(X,Y,Z+1),hs(X+1,Y,Z+1),u),l(hs(X,Y+1,Z+1),hs(X+1,Y+1,Z+1),u),v),w);
+}
+function vnormals(L){
+  const p=L.pos,I=L.idx,nr=new Float32Array(p.length);
+  for(let t=0;t<I.length;t+=3){
+    const a=3*I[t],b=3*I[t+1],c=3*I[t+2],ux=p[b]-p[a],uy=p[b+1]-p[a+1],uz=p[b+2]-p[a+2],vx=p[c]-p[a],vy=p[c+1]-p[a+1],vz=p[c+2]-p[a+2];
+    const nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx;
+    for(const k of [a,b,c]){nr[k]+=nx;nr[k+1]+=ny;nr[k+2]+=nz}
+  }
+  for(let i=0;i<nr.length;i+=3){const l=Math.hypot(nr[i],nr[i+1],nr[i+2])||1;nr[i]/=l;nr[i+1]/=l;nr[i+2]/=l}
+  return nr;
+}
+function applyTex(noMesh){
+  const t=$('tx').value,p=S.base.slice();
+  if(t){
+    const amp=+$('td').value/S.s,f=Math.max(2,+$('tf').value/S.s),nr=S.nrm,T=6.2832;
+    for(let v=0;v<p.length/3;v++){
+      const i=3*v,x=p[i],y=p[i+1],z=p[i+2];if(y<S.floor+1.2)continue; // keep the part touching the base flat
+      let d=0;
+      if(t==='fuzzy')d=(vn(x/f,y/f,z/f)*.7+vn(2*x/f,2*y/f,2*z/f)*.3-.5)*amp;
+      else if(t==='grain')d=(vn(3*x/f,3*y/f,3*z/f)-.5)*amp;
+      else if(t==='ribs')d=Math.sin(y*T/f)*.5*amp;
+      else d=(Math.sin(x*T/f)+Math.sin(y*T/f)+Math.sin(z*T/f))/3*.5*amp;
+      p[i]+=nr[i]*d;p[i+1]+=nr[i+1]*d;p[i+2]+=nr[i+2]*d;
+    }
+  }
+  S.L.pos=p;
+  if(!noMesh&&S.meshL){const g=S.meshL.geometry;g.attributes.position.array.set(p);g.attributes.position.needsUpdate=true;g.computeVertexNormals();g.computeBoundingSphere()}
+}
+let slotCol=[];
+function paintLetters(){
+  if(!S||!S.meshL)return;const g=S.meshL.geometry,n=S.slot.length,a=new Float32Array(3*n),cs=slotCol.map(c=>new THREE.Color(c));
+  for(let v=0;v<n;v++){const c=cs[S.slot[v]]||cs[0];a[3*v]=c.r;a[3*v+1]=c.g;a[3*v+2]=c.b}
+  g.setAttribute('color',new THREE.BufferAttribute(a,3));
+}
+function renderSC(){
+  const box=$('sc');box.innerHTML='';if(!S)return;$('sch').style.display='none';
+  S.names.forEach((nm,k)=>{
+    const w=document.createElement('label'),i=document.createElement('input');w.className='sw';i.type='color';i.value=slotCol[k];
+    i.oninput=()=>{slotCol[k]=i.value;paintLetters()};w.append(nm,i);box.appendChild(w);
+  });
+}
 let S=null,group=null,matL=null,matP=null;
 function build(){
   const A=chars($('a').value).map(c=>c.toUpperCase()),B=chars($('b').value).map(c=>c.toUpperCase()),n=A.length;
@@ -204,6 +269,8 @@ function build(){
     P.push(...q[0],...q[1],...q[2],...q[0],...q[2],...q[3]);
   }
   const LC=cleanMesh(L);S={L:LC,P,s,n,mm,len:(n*CW*r2+12)*s,wid:(CW*r2+8)*s};
+  S.base=LC.pos.slice();S.names=A.map((c,k)=>c+'/'+B[k]);S.slot=new Uint8Array(S.base.length/3);for(let v=0;v<S.slot.length;v++)S.slot[v]=Math.max(0,Math.min(n-1,Math.floor(S.base[3*v]/CW)));
+  for(let k=0;k<n;k++)if(!slotCol[k])slotCol[k]=$('c1').value;slotCol.length=n;S.nrm=vnormals(LC);S.floor=1e9;for(let i=1;i<S.base.length;i+=3)S.floor=Math.min(S.floor,S.base[i]);applyTex(true);
   if(group){scene.remove(group);group.traverse(o=>{o.geometry&&o.geometry.dispose()})}
   const gy=-(PH+H)/2;
   const mk=(arr,mat)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(arr),3));g.computeVertexNormals();
@@ -211,9 +278,9 @@ function build(){
   const mkL=(m3,mat)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(m3.pos),3));
     g.setIndex(new THREE.BufferAttribute(new Uint32Array(m3.idx),1));g.computeVertexNormals();
     const m=new THREE.Mesh(g,mat);m.castShadow=m.receiveShadow=true;m.position.set(-C,gy,-C);return m};
-  matL=new THREE.MeshStandardMaterial({color:$('c1').value,roughness:.55,metalness:.05});
+  matL=new THREE.MeshStandardMaterial({vertexColors:true,color:0xffffff,roughness:.55,metalness:.05});
   matP=new THREE.MeshStandardMaterial({color:$('c2').value,roughness:.6,metalness:.02});
-  group=new THREE.Group();group.add(mkL(LC,matL),mk(P,matP));scene.add(group);
+  group=new THREE.Group();group.add(mkL(LC,matL),mk(P,matP));S.meshL=group.children[0];paintLetters();renderSC();scene.add(group);
   ground.position.y=gy-.2;
   const R=n*CW*.9;Object.assign(key.shadow.camera,{left:-R,right:R,top:R,bottom:-R,near:10,far:R*6});key.shadow.camera.updateProjectionMatrix();
   key.position.set(R*.5,R*1.6,R*1.1);
@@ -234,8 +301,17 @@ function check(){
   return false;
 }
 $('a').oninput=$('b').oninput=check;
+let cur=$('a');['a','b'].forEach(id=>$(id).addEventListener('focus',()=>cur=$(id)));
+['❤️','💖','💕','💗','💙','💜','🧡','💛','💚','🖤','🤍','💝','⭐','🌟','✨','🌸','🌹','🌷','🌻','🌼','🍀','🌈','☀️','🌙','🔥','🎉','🎈','🎂','🏆','👑','💎','🎵','🐱','🐶','🦋','🐼','🦄','🐰','🏠','🚗','✈️','⚽','🎮','📚','☕','🍕','🍓','🍦'].forEach(e=>{
+  const b=document.createElement('button');b.textContent=e;
+  b.onclick=()=>{const f=cur,st=f.selectionStart==null?f.value.length:f.selectionStart,en=f.selectionEnd==null?st:f.selectionEnd;
+    f.value=f.value.slice(0,st)+e+f.value.slice(en);const q=st+e.length;try{f.setSelectionRange(q,q)}catch(x){}check()};
+  $('eg').appendChild(b);
+});
+function onTex(){$('txr').style.display=$('tx').value?'block':'none';$('tdv').textContent=(+$('td').value).toFixed(2);$('tfv').textContent=(+$('tf').value).toFixed(1);if(S)applyTex()}
+$('tx').onchange=$('td').oninput=$('tf').oninput=onTex;
 $('go').onclick=()=>{if(check()&&!build())$('info').textContent='Enter both names first.'};
-$('c1').oninput=()=>matL&&matL.color.set($('c1').value);
+$('c1').oninput=()=>{slotCol=slotCol.map(()=>$('c1').value);renderSC();paintLetters()};
 $('c2').oninput=()=>matP&&matP.color.set($('c2').value);
 
 // ---- orbit viewer ----
@@ -250,7 +326,7 @@ $('sp').onclick=()=>{spin=!spin};
 $('rs').onclick=resetView;stage.ondblclick=resetView;
 const pts=new Map();let pd=0;
 const dist=()=>{const p=[...pts.values()];return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
-stage.onpointerdown=e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.setPointerCapture(e.pointerId);spin=false;if(pts.size===2)pd=dist()};
+stage.onpointerdown=e=>{if(e.target.closest('.vbar'))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.setPointerCapture(e.pointerId);spin=false;if(pts.size===2)pd=dist()};
 stage.onpointerup=stage.onpointercancel=e=>{pts.delete(e.pointerId)};
 stage.onpointermove=e=>{
   const p=pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
@@ -284,12 +360,21 @@ function stlOf(T){
   return new Uint8Array(buf);
 }
 const stlBytes=()=>stlOf(tri('all'));
-function objText(){
-  const s=S.s,f=v=>(v*s).toFixed(3),V=(x,y,z)=>'v '+f(x)+' '+f(-z)+' '+f(y),{pos,idx}=S.L,P=S.P,o=['# Flip Name 3D, units: mm, z up','o letters'];
+function triSlot(k){
+  const T=[],{pos,idx}=S.L;
+  for(let i=0;i<idx.length;i+=3)if(S.slot[idx[i]]===k)for(let q=0;q<3;q++){const p=3*idx[i+q];T.push(pos[p],pos[p+1],pos[p+2])}
+  return T;
+}
+const rgb=h=>[1,3,5].map(i=>(parseInt(h.slice(i,i+2),16)/255).toFixed(3)).join(' ');
+function mtlText(){const m=[];slotCol.forEach((c,k)=>m.push('newmtl letter'+(k+1),'Kd '+rgb(c),''));m.push('newmtl base','Kd '+rgb($('c2').value));return m.join('\n')}
+function objText(mtl){
+  const s=S.s,f=v=>(v*s).toFixed(3),V=(x,y,z)=>'v '+f(x)+' '+f(-z)+' '+f(y),{pos,idx}=S.L,P=S.P,o=['# Flip Name 3D, units: mm, z up','mtllib '+mtl];
   for(let i=0;i<pos.length;i+=3)o.push(V(pos[i],pos[i+1],pos[i+2]));
-  for(let i=0;i<idx.length;i+=3)o.push('f '+(idx[i]+1)+' '+(idx[i+1]+1)+' '+(idx[i+2]+1));
-  const off=pos.length/3;o.push('o base');
+  const off=pos.length/3;
   for(let i=0;i<P.length;i+=3)o.push(V(P[i],P[i+1],P[i+2]));
+  for(let k=0;k<S.n;k++){o.push('g letter_'+(k+1),'usemtl letter'+(k+1));
+    for(let i=0;i<idx.length;i+=3)if(S.slot[idx[i]]===k)o.push('f '+(idx[i]+1)+' '+(idx[i+1]+1)+' '+(idx[i+2]+1))}
+  o.push('g base','usemtl base');
   for(let i=0;i<P.length/3;i+=3)o.push('f '+(off+i+1)+' '+(off+i+2)+' '+(off+i+3));
   return o.join('\n');
 }
@@ -321,11 +406,18 @@ $('dl').onclick=async()=>{
   if(framed)await saveBlob(b+'.zip',zipMany([{name:b+'.stl',data:stlBytes()}]));
   else anchor(new Blob([stlBytes()],{type:'model/stl'}),b+'.stl');
 };
-// Editable files for Tinkercad, Fusion 360, Blender, etc.
+// Editable files for Tinkercad, Fusion 360, Blender, etc. (every letter is also a separate part with its own colour)
 $('ed').onclick=async()=>{
-  if(!ready())return;const b=nameBase(),te=new TextEncoder();
-  const txt='Flip Name 3D - editable files\n\n'+b+'.obj : whole model (letters + base), import into Tinkercad, Fusion 360, Blender, etc.\n'+
-    b+'-letters.stl and '+b+'-base.stl : separate parts, so you can edit or color them independently.\nUnits are millimetres, Z is up.\n\nTinkercad: Import > choose the .obj (or an .stl) > set the scale to 100% > Import.\n';
-  await saveBlob(b+'-editable.zip',zipMany([{name:b+'.obj',data:te.encode(objText())},{name:b+'-letters.stl',data:stlOf(tri('L'))},{name:b+'-base.stl',data:stlOf(tri('P'))},{name:'README.txt',data:te.encode(txt)}]));
+  if(!ready())return;const b=nameBase(),te=new TextEncoder(),pad=k=>String(k+1).padStart(2,'0');
+  const txt='Flip Name 3D - editable files\n\n'+b+'.obj + '+b+'.mtl : whole model with one group and colour per letter (Blender, Fusion 360, etc.)\n'+
+    b+'-letters.stl and '+b+'-base.stl : all letters together, and the base\nletter-NN.stl : every letter / emoji as its own part, so you can edit it or give it its own filament colour\n\n'+
+    'Letter colours:\n'+S.names.map((nm,k)=>'  letter-'+pad(k)+'.stl  '+nm+'  '+slotCol[k]).join('\n')+'\nBase colour: '+$('c2').value+
+    '\n\nAll files share the same coordinates, so they line up when imported together. Units are millimetres, Z is up.\n'+
+    'Tinkercad: Import > choose the .obj (or any .stl) > set the scale to 100% > Import.\n'+
+    'Bambu Studio: select the letter-NN.stl files and the base together; if asked, load them as parts of one object, then assign a filament to each part.\n';
+  const files=[{name:b+'.obj',data:te.encode(objText(b+'.mtl'))},{name:b+'.mtl',data:te.encode(mtlText())},{name:b+'-letters.stl',data:stlOf(tri('L'))},{name:b+'-base.stl',data:stlOf(tri('P'))}];
+  for(let k=0;k<S.n;k++)files.push({name:'letter-'+pad(k)+'.stl',data:stlOf(triSlot(k))});
+  files.push({name:'README.txt',data:te.encode(txt)});
+  await saveBlob(b+'-editable.zip',zipMany(files));
 };
 </script></body></html>
