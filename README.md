@@ -20,6 +20,8 @@ One name reads from one side, and the other name reads from the opposite side.
 - Capital letters work best.
 - A shorter name plus an emoji works fine.
 - Check both sides in the viewer before printing.
+- Also, use any textures, like fuzzy skin, while 3D printing for better results. 
+- In the model, there may be some stair-like designs. That's because of pixel limitation. But that texture may be nice for the model. 
 
 ---
 
