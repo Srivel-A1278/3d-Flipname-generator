@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flip Name 3D</title>
+<style>
+:root{--bg:#fff;--panel:rgba(255,255,255,.78);--g1:#ffd9e8;--g2:#d6e4ff;--fg:#1a1a1f;--card:#f0f0f4;--ac:#e0457b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#15151a;--fg:#f0f0f4;--card:#24242c;--panel:rgba(28,28,40,.78);--g1:#4a2160;--g2:#102a5c}}
+:root[data-theme="dark"]{--bg:#15151a;--fg:#f0f0f4;--card:#24242c;--panel:rgba(28,28,40,.78);--g1:#4a2160;--g2:#102a5c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(#8883 1px,transparent 1.5px) 0 0/22px 22px,radial-gradient(circle at 12% 8%,var(--g1),transparent 55%),radial-gradient(circle at 88% 92%,var(--g2),transparent 55%),var(--bg);color:var(--fg);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.wrap{display:flex;flex-direction:column;max-width:600px;margin:14px auto;padding:16px;background:var(--panel);border-radius:20px;box-shadow:0 8px 30px #0002;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+h1{font-size:22px;margin:4px 0 12px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+input[type=text],input[type=number]{flex:1;min-width:0;padding:12px;border-radius:10px;border:1px solid #8884;background:var(--card);color:var(--fg);font-size:16px}
+input[type=color]{width:38px;height:34px;border:0;padding:0;background:none}
+button{padding:10px 14px;border-radius:10px;border:0;background:var(--card);color:var(--fg);font-size:15px;cursor:pointer}
+button.p{background:var(--ac);color:#fff}
+button:disabled{opacity:.5}
+#stage{position:relative;width:100%;height:360px;margin:12px 0 4px;border-radius:14px;background:radial-gradient(circle at 50% 25%,#ffffff,#c9cfe0 75%);touch-action:none;overflow:hidden}
+.side{display:contents}
+.side>*{order:2}.side>.pre,#stage{order:1}
+#stage canvas{position:absolute;inset:0;width:100%;height:100%}
+#empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#555;font-size:15px;pointer-events:none}
+#warn{display:none;background:var(--card);border-left:4px solid var(--ac);padding:10px 12px;border-radius:10px;margin-top:10px;font-size:14px}
+#warn button{margin:6px 6px 0 0;font-size:20px;padding:6px 12px}
+.hint{font-size:13px;opacity:.75;margin-top:8px;line-height:1.4}
+label{font-size:13px;opacity:.85}
+#foot{margin-top:18px;padding-top:12px;border-top:1px solid #8883;font-size:13px;opacity:.8;text-align:center;line-height:1.6}
+#foot a{color:inherit}
+#mm{max-width:80px;flex:none}
+/* Desktop: controls panel on the left, big 3D viewer on the right, background visible around and between them */
+@media (min-width:900px){
+  .wrap{display:grid;grid-template-columns:400px 1fr;grid-template-rows:minmax(calc(100vh - 40px),auto);gap:20px;max-width:none;margin:0;padding:20px;min-height:100vh;background:none;box-shadow:none;border-radius:0;-webkit-backdrop-filter:none;backdrop-filter:none}
+  .side{display:block;padding:20px;background:var(--panel);border:1px solid #8886;border-radius:20px;box-shadow:0 8px 30px #0002;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  #stage{margin:0;height:auto;min-height:480px;border:1px solid #8886;border-radius:20px;box-shadow:0 8px 30px #0002}
+}
+</style></head><body>
+<div class="wrap">
+<div class="side">
+<h1 class="pre">🔄 Flip Name 3D</h1>
+<div class="row pre"><input type="text" id="a" placeholder="First name" maxlength="14"><input type="text" id="b" placeholder="Second name" maxlength="14"></div>
+<div id="warn" class="pre"></div>
+<div class="row pre"><label for="mm">Height (mm)</label><input type="number" id="mm" value="30" min="15" max="80">
+<label>Letters</label><input type="color" id="c1" value="#1c1c20"><label>Base</label><input type="color" id="c2" value="#f1e9c6">
+<button class="p" id="go">Generate</button></div>
+<div class="row" style="margin-top:0"><button id="va">Name 1</button><button id="vb">Name 2</button><button id="vt">Top</button><button id="sp">Spin</button><button id="rs">Reset</button></div>
+<div class="row"><button class="p" id="dl">Download STL</button><button id="ed">Editable files (Tinkercad / CAD)</button></div>
+<div class="hint" id="info"></div>
+<div id="foot" style="display:none"></div>
+<div class="hint">Drag to orbit, pinch or scroll to zoom, double-tap to reset. Turn the base 90° to read the other name. Type an emoji anywhere in a name to place it exactly. Open the STL in Bambu Studio or any slicer to print. For editing in Tinkercad or other CAD, use the editable files (OBJ).</div>
+</div>
+<div id="stage"><div id="empty">Enter two names to generate your flip name</div></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ---- YOUR DETAILS: fill these in (leave a field empty to hide it) ----
+const OWNER={brand:'KLINTECH',name:'A.Srivel',phone:'',email:'',year:2026,notes:'All rights reserved.'};
+(function(){
+  const f=document.getElementById('foot'),add=(t,href)=>{if(f.childNodes.length)f.append(' · ');if(href){const a=document.createElement('a');a.href=href;a.textContent=t;f.append(a)}else f.append(t)};
+  if(OWNER.brand)add('Created by '+OWNER.brand);
+  if(OWNER.name)add('© '+OWNER.year+' '+OWNER.name+'. '+OWNER.notes);
+  if(OWNER.phone)add('Contact: '+OWNER.phone,'tel:'+OWNER.phone.replace(/[^\d+]/g,''));
+  if(OWNER.email)add(OWNER.email,'mailto:'+OWNER.email);
+  if(f.childNodes.length)f.style.display='block';
+})();
+const H=88,CW=53,MG=2,SS=2,$=id=>document.getElementById(id),stage=$('stage');
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(35,1,1,3000);
+scene.add(new THREE.HemisphereLight(0xffffff,0x8a8a9a,.6));
+const key=new THREE.DirectionalLight(0xffffff,.55);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.bias=-.0004;key.shadow.normalBias=.4;scene.add(key,key.target);
+const fill=new THREE.DirectionalLight(0xffffff,.3);fill.position.set(-200,80,-100);scene.add(fill);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(3000,3000),new THREE.ShadowMaterial({opacity:.25}));
+ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+function resize(){const w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}
+addEventListener('resize',resize);resize();if(window.ResizeObserver)new ResizeObserver(resize).observe(stage);
+
+// ---- glyphs ----
+const seg=window.Intl&&Intl.Segmenter?new Intl.Segmenter(undefined,{granularity:'grapheme'}):null;
+const chars=s=>{s=s.trim();return seg?[...seg.segment(s)].map(x=>x.segment):[...s]};
+function glyph(ch){
+  const c=document.createElement('canvas');c.width=CW*SS;c.height=H*SS;
+  const x=c.getContext('2d',{willReadFrequently:true});x.scale(SS,SS);x.fillStyle='#000';
+  if(/[\p{L}\p{N}]/u.test(ch)){
+    x.font='900 '+Math.round(H*1.31)+'px "Arial Black",Impact,Arial,sans-serif';x.textBaseline='alphabetic';
+    const w=x.measureText(ch).width||1,s=Math.min(1,(CW-2*MG)/w);
+    x.translate((CW-w*s)/2,H-.5);x.scale(s,1);x.fillText(ch,0,0);
+  }else{
+    // emoji: crop to the visible shape and stretch to letter height so it stands on the base
+    const t=document.createElement('canvas');t.width=t.height=160;
+    const y=t.getContext('2d',{willReadFrequently:true});
+    y.font='100px sans-serif';y.textAlign='center';y.textBaseline='middle';y.fillText(ch,80,84);
+    const td=y.getImageData(0,0,160,160).data;let x0=160,y0=160,x1=-1,y1=-1;
+    for(let j=0;j<160;j++)for(let i=0;i<160;i++)if(td[(j*160+i)*4+3]>60){if(i<x0)x0=i;if(i>x1)x1=i;if(j<y0)y0=j;if(j>y1)y1=j}
+    const top=Math.round(H*.06);
+    if(x1>=0)x.drawImage(t,x0,y0,x1-x0+1,y1-y0+1,MG,top,CW-2*MG,H-top);
+  }
+  const W2=CW*SS,d=x.getImageData(0,0,W2,H*SS).data,a=new Uint8Array(CW*H);
+  for(let r=0;r<H;r++)for(let u=0;u<CW;u++){let t=0;for(let q=0;q<SS;q++)for(let p=0;p<SS;p++)t+=d[((r*SS+q)*W2+u*SS+p)*4+3];a[r*CW+u]=t/(SS*SS)}
+  return a;
+}
+// Smooth isosurface (surface nets): vertices sit where the field crosses 0.5, so edges follow the true letter outline
+function surf(F,NX,NY,NZ,ox,oy,oz,pos,idx){
+  const fi=(i,j,k)=>(j*NX+i)*NZ+k,cid=(i,j,k)=>(j*(NX-1)+i)*(NZ-1)+k,cv=new Int32Array((NX-1)*(NY-1)*(NZ-1)).fill(-1);
+  const C=[[0,0,0],[1,0,0],[0,1,0],[1,1,0],[0,0,1],[1,0,1],[0,1,1],[1,1,1]];
+  const E=[[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]],val=new Float32Array(8);
+  for(let j=0;j<NY-1;j++)for(let i=0;i<NX-1;i++)for(let k=0;k<NZ-1;k++){
+    let m=0;for(let c=0;c<8;c++){val[c]=F[fi(i+C[c][0],j+C[c][1],k+C[c][2])];if(val[c]>=.5)m|=1<<c}
+    if(m===0||m===255)continue;
+    let sx=0,sy=0,sz=0,n=0;
+    for(const [a,b] of E){const va=val[a],vb=val[b];if((va>=.5)===(vb>=.5))continue;const t=(.5-va)/(vb-va);
+      sx+=C[a][0]+t*(C[b][0]-C[a][0]);sy+=C[a][1]+t*(C[b][1]-C[a][1]);sz+=C[a][2]+t*(C[b][2]-C[a][2]);n++}
+    cv[cid(i,j,k)]=pos.length/3;pos.push(ox+i+sx/n,oy+j+sy/n,oz+k+sz/n);
+  }
+  const quad=(c,ax,sg)=>{
+    const v=c.map(q=>cv[cid(q[0],q[1],q[2])]);if(v.some(q=>q<0))return;
+    const P=q=>[pos[3*q],pos[3*q+1],pos[3*q+2]],nn=cross(sub(P(v[1]),P(v[0])),sub(P(v[2]),P(v[0])));
+    const o=nn[ax]*sg<0?[v[0],v[3],v[2],v[1]]:v;
+    const d1=sub(P(o[0]),P(o[2])),d2=sub(P(o[1]),P(o[3]));
+    if(dot(d1,d1)<=dot(d2,d2))idx.push(o[0],o[1],o[2],o[0],o[2],o[3]);else idx.push(o[0],o[1],o[3],o[1],o[2],o[3]);
+  };
+  for(let j=1;j<NY-1;j++)for(let i=1;i<NX-1;i++)for(let k=1;k<NZ-1;k++){
+    const f0=F[fi(i,j,k)]>=.5;
+    if((F[fi(i+1,j,k)]>=.5)!==f0)quad([[i,j-1,k-1],[i,j,k-1],[i,j,k],[i,j-1,k]],0,f0?1:-1);
+    if((F[fi(i,j+1,k)]>=.5)!==f0)quad([[i-1,j,k-1],[i,j,k-1],[i,j,k],[i-1,j,k]],1,f0?1:-1);
+    if((F[fi(i,j,k+1)]>=.5)!==f0)quad([[i-1,j-1,k],[i,j-1,k],[i,j,k],[i-1,j,k]],2,f0?1:-1);
+  }
+  // edges that start on the padding layer (inside sample is the neighbour)
+  for(let j=1;j<NY-1;j++)for(let i=1;i<NX-1;i++)for(let k=1;k<NZ-1;k++){
+    const f1=F[fi(i,j,k)]>=.5;
+    if(F[fi(i-1,j,k)]<.5&&f1&&i===1)quad([[i-1,j-1,k-1],[i-1,j,k-1],[i-1,j,k],[i-1,j-1,k]],0,-1);
+    if(F[fi(i,j-1,k)]<.5&&f1&&j===1)quad([[i-1,j-1,k-1],[i,j-1,k-1],[i,j-1,k],[i-1,j-1,k]],1,-1);
+    if(F[fi(i,j,k-1)]<.5&&f1&&k===1)quad([[i-1,j-1,k-1],[i,j-1,k-1],[i,j,k-1],[i-1,j,k-1]],2,-1);
+  }
+}
+const sub=(p,q)=>[p[0]-q[0],p[1]-q[1],p[2]-q[2]];
+const cross=(u,v)=>[u[1]*v[2]-u[2]*v[1],u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]];
+const dot=(u,v)=>u[0]*v[0]+u[1]*v[1]+u[2]*v[2];
+
+// ---- model ----
+function cleanMesh(L){
+  const pos=L.pos,idx=L.idx,nv=pos.length/3,par=new Int32Array(nv);for(let i=0;i<nv;i++)par[i]=i;
+  const find=a=>{while(par[a]!==a){par[a]=par[par[a]];a=par[a]}return a},uni=(x,y)=>{x=find(x);y=find(y);if(x!==y)par[y]=x};
+  for(let t=0;t<idx.length;t+=3){uni(idx[t],idx[t+1]);uni(idx[t],idx[t+2])}
+  const minY=new Float32Array(nv).fill(1e9);let floor=1e9;
+  for(let t=0;t<idx.length;t++){const v=idx[t],r=find(v);if(pos[3*v+1]<minY[r])minY[r]=pos[3*v+1];if(pos[3*v+1]<floor)floor=pos[3*v+1]}
+  // keep only pieces that reach the base; anything floating is removed
+  const map=new Int32Array(nv).fill(-1),P2=[],I2=[];
+  for(let t=0;t<idx.length;t+=3){
+    if(minY[find(idx[t])]>floor+1.5)continue;
+    for(let q=0;q<3;q++){const v=idx[t+q];if(map[v]<0){map[v]=P2.length/3;P2.push(pos[3*v],pos[3*v+1],pos[3*v+2])}I2.push(map[v])}
+  }
+  const n=P2.length/3,adj=Array.from({length:n},()=>[]);
+  for(let t=0;t<I2.length;t+=3){const a=I2[t],b=I2[t+1],c=I2[t+2];adj[a].push(b,c);adj[b].push(a,c);adj[c].push(a,b)}
+  let p=Float32Array.from(P2);
+  for(let it=0;it<5;it++)for(const f of [.5,-.53]){
+    const q=new Float32Array(p.length);
+    for(let v=0;v<n;v++){
+      const nb=adj[v],i=3*v;
+      if(!nb.length||p[i+1]<floor+.8){q[i]=p[i];q[i+1]=p[i+1];q[i+2]=p[i+2];continue}
+      let x=0,y=0,z=0;for(const w of nb){x+=p[3*w];y+=p[3*w+1];z+=p[3*w+2]}
+      const m=nb.length;q[i]=p[i]+f*(x/m-p[i]);q[i+1]=p[i+1]+f*(y/m-p[i+1]);q[i+2]=p[i+2]+f*(z/m-p[i+2]);
+    }
+    p=q;
+  }
+  return {pos:Array.from(p),idx:I2};
+}
+let S=null,group=null,matL=null,matP=null;
+function build(){
+  const A=chars($('a').value).map(c=>c.toUpperCase()),B=chars($('b').value).map(c=>c.toUpperCase()),n=A.length;
+  if(!n||n!==B.length)return false;
+  const mm=Math.min(80,Math.max(15,+$('mm').value||30)),s=mm/H,PH=Math.max(4,Math.round(2.5/s)),L={pos:[],idx:[]};
+  const NX=CW+2,NY=H+2,NZ=CW+2,LS=NX*NZ,fi=(i,j,k)=>(j*NX+i)*NZ+k;
+  for(let k=0;k<n;k++){
+    const ga=glyph(A[k]),gb=glyph(B[k]),F=new Float32Array(NX*NY*NZ);
+    // intersection of the two letters, kept as smooth 0..1 coverage (min of both)
+    for(let r=0;r<H;r++)for(let u=0;u<CW;u++){const a=ga[r*CW+u];if(!a)continue;for(let v=0;v<CW;v++){const b=gb[r*CW+v];if(b)F[fi(u+1,H-r,v+1)]=Math.min(a,b)/255}}
+    // printability: lower onto the base, then delete any piece not connected to it
+    let mn=0;for(let j=1;j<=H&&!mn;j++)for(let q=j*LS;q<(j+1)*LS;q++)if(F[q]>=.5){mn=j;break}
+    if(mn>1){F.copyWithin(LS,mn*LS);F.fill(0,(NY-mn+1)*LS)}
+    const keep=new Uint8Array(F.length),st=[];
+    for(let q=LS;q<2*LS;q++)if(F[q]>=.5){keep[q]=1;st.push(q)}
+    while(st.length){const p=st.pop(),kk=p%NZ,t=(p/NZ)|0,i=t%NX,j=(t/NX)|0;
+      for(const [I,J,K] of [[i+1,j,kk],[i-1,j,kk],[i,j+1,kk],[i,j-1,kk],[i,j,kk+1],[i,j,kk-1]]){
+        if(I<0||I>=NX||J<0||J>=NY||K<0||K>=NZ)continue;const q=fi(I,J,K);if(F[q]>=.5&&!keep[q]){keep[q]=1;st.push(q)}}}
+    for(let q=0;q<F.length;q++)if(F[q]>=.5&&!keep[q])F[q]=0;
+    // footing: widen the contact area with the base so letters cannot snap off
+    const FH=Math.max(2,Math.round(1.2/s)),R=2,fd=new Uint8Array(NX*NZ);
+    for(let i=1;i<NX-1;i++)for(let q=1;q<NZ-1;q++){
+      if(F[fi(i,1,q)]<.5&&F[fi(i,2,q)]<.5)continue;
+      for(let di=-R;di<=R;di++)for(let dk=-R;dk<=R;dk++){const I=i+di,K=q+dk;if(di*di+dk*dk<=R*R+1&&I>=1&&I<NX-1&&K>=1&&K<NZ-1)fd[I*NZ+K]=1}
+    }
+    for(let j=1;j<=FH+1;j++)for(let i=1;i<NX-1;i++)for(let q=1;q<NZ-1;q++)if(fd[i*NZ+q])F[fi(i,j,q)]=1;
+    surf(F,NX,NY,NZ,k*CW-1,PH-3,k*CW-1,L.pos,L.idx);
+  }
+  // base plate rotated 45 degrees along the diagonal chain of letters
+  const C=n*CW/2,r2=Math.SQRT2,hl=n*CW/r2+6,hw=CW/r2+4,P=[],ctr=[C,PH/2,C];
+  const pt=i=>{const a=(i&1?1:-1)*hl,b=(i&2?1:-1)*hw,yy=i&4?PH:0;return [C+(a+b)/r2,yy,C+(a-b)/r2]};
+  for(let t=0;t<3;t++)for(let val=0;val<2;val++){
+    const o=[[0,0],[1,0],[1,1],[0,1]].map(pq=>{let idx=0,bits=[0,0,0];for(let m=0;m<3;m++)bits[m]=m===t?val:pq[idx++];return bits[0]|bits[1]<<1|bits[2]<<2});
+    let q=o.map(pt);const cen=[0,1,2].map(m=>(q[0][m]+q[1][m]+q[2][m]+q[3][m])/4);
+    if(dot(cross(sub(q[1],q[0]),sub(q[2],q[0])),sub(cen,ctr))<0)q=[q[0],q[3],q[2],q[1]];
+    P.push(...q[0],...q[1],...q[2],...q[0],...q[2],...q[3]);
+  }
+  const LC=cleanMesh(L);S={L:LC,P,s,n,mm,len:(n*CW*r2+12)*s,wid:(CW*r2+8)*s};
+  if(group){scene.remove(group);group.traverse(o=>{o.geometry&&o.geometry.dispose()})}
+  const gy=-(PH+H)/2;
+  const mk=(arr,mat)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(arr),3));g.computeVertexNormals();
+    const m=new THREE.Mesh(g,mat);m.castShadow=m.receiveShadow=true;m.position.set(-C,gy,-C);return m};
+  const mkL=(m3,mat)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array(m3.pos),3));
+    g.setIndex(new THREE.BufferAttribute(new Uint32Array(m3.idx),1));g.computeVertexNormals();
+    const m=new THREE.Mesh(g,mat);m.castShadow=m.receiveShadow=true;m.position.set(-C,gy,-C);return m};
+  matL=new THREE.MeshStandardMaterial({color:$('c1').value,roughness:.55,metalness:.05});
+  matP=new THREE.MeshStandardMaterial({color:$('c2').value,roughness:.6,metalness:.02});
+  group=new THREE.Group();group.add(mkL(LC,matL),mk(P,matP));scene.add(group);
+  ground.position.y=gy-.2;
+  const R=n*CW*.9;Object.assign(key.shadow.camera,{left:-R,right:R,top:R,bottom:-R,near:10,far:R*6});key.shadow.camera.updateProjectionMatrix();
+  key.position.set(R*.5,R*1.6,R*1.1);
+  const tH=Math.tan(THREE.MathUtils.degToRad(cam.fov/2));
+  baseR=Math.max(240,Math.max(n*CW*Math.max(.72,Math.min(1,2-cam.aspect))/(tH*cam.aspect),(H*.9+n*CW*.28)/tH)+n*CW*.45);resetView();
+  $('empty').style.display='none';
+  $('info').textContent='Print size: about '+Math.round(S.len)+' × '+Math.round(S.wid)+' mm, '+Math.round(PH*s+mm)+' mm tall';
+  return true;
+}
+function check(){
+  const a=chars($('a').value),b=chars($('b').value),w=$('warn');
+  if(a.length===b.length||!a.length||!b.length){w.style.display='none';return true}
+  const sh=a.length<b.length?'a':'b',df=Math.abs(a.length-b.length);
+  w.style.display='block';
+  w.innerHTML='Name '+(sh==='a'?1:2)+' is '+df+' letter'+(df>1?'s':'')+' shorter. Add an emoji to fill the gap?<br>'+
+    ['❤️','⭐','🌸','🔥'].map(e=>'<button data-e="'+e+'">'+e+'</button>').join('');
+  w.querySelectorAll('button').forEach(bt=>bt.onclick=()=>{const f=$(sh);f.value=f.value.trim()+bt.dataset.e;if(check())build()});
+  return false;
+}
+$('a').oninput=$('b').oninput=check;
+$('go').onclick=()=>{if(check()&&!build())$('info').textContent='Enter both names first.'};
+$('c1').oninput=()=>matL&&matL.color.set($('c1').value);
+$('c2').oninput=()=>matP&&matP.color.set($('c2').value);
+
+// ---- orbit viewer ----
+let th=0,ph=.4,r=300,tth=0,tph=.4,tr=300,baseR=300,spin=false;
+const TAU=Math.PI*2;
+function setAz(a){tth=a+Math.round((tth-a)/TAU)*TAU;spin=false}
+function resetView(){tth=0;tph=.4;tr=baseR;spin=false}
+$('va').onclick=()=>{setAz(0);tph=.3};
+$('vb').onclick=()=>{setAz(-Math.PI/2);tph=.3};
+$('vt').onclick=()=>{tph=1.45;spin=false};
+$('sp').onclick=()=>{spin=!spin};
+$('rs').onclick=resetView;stage.ondblclick=resetView;
+const pts=new Map();let pd=0;
+const dist=()=>{const p=[...pts.values()];return Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y)};
+stage.onpointerdown=e=>{pts.set(e.pointerId,{x:e.clientX,y:e.clientY});stage.setPointerCapture(e.pointerId);spin=false;if(pts.size===2)pd=dist()};
+stage.onpointerup=stage.onpointercancel=e=>{pts.delete(e.pointerId)};
+stage.onpointermove=e=>{
+  const p=pts.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+  if(pts.size===1){tth-=dx*.008;tph=Math.max(.02,Math.min(1.45,tph+dy*.006))}
+  else if(pts.size===2){const d=dist();if(pd)tr=Math.max(baseR*.35,Math.min(baseR*2.5,tr*pd/d));pd=d}
+};
+stage.addEventListener('wheel',e=>{e.preventDefault();tr=Math.max(baseR*.35,Math.min(baseR*2.5,tr*Math.exp(e.deltaY*.001)))},{passive:false});
+(function loop(){
+  requestAnimationFrame(loop);
+  if(spin)tth+=.01;
+  th+=(tth-th)*.15;ph+=(tph-ph)*.15;r+=(tr-r)*.15;
+  cam.position.set(r*Math.cos(ph)*Math.sin(th),r*Math.sin(ph),r*Math.cos(ph)*Math.cos(th));
+  cam.lookAt(0,0,0);renderer.render(scene,cam);
+})();
+
+// ---- STL export ----
+function tri(part){
+  const T=[];
+  if(part!=='P'){const {pos,idx}=S.L;for(let i=0;i<idx.length;i++){const p=3*idx[i];T.push(pos[p],pos[p+1],pos[p+2])}}
+  if(part!=='L')for(let i=0;i<S.P.length;i++)T.push(S.P[i]);
+  return T;
+}
+function stlOf(T){
+  const nt=T.length/9,buf=new ArrayBuffer(84+50*nt),dv=new DataView(buf),s=S.s;
+  new TextEncoder().encodeInto('flip name',new Uint8Array(buf,0,80));dv.setUint32(80,nt,true);
+  let o=84;const V=i=>[T[i]*s,-T[i+2]*s,T[i+1]*s];
+  for(let t=0;t<nt;t++){
+    const p=V(9*t),q=V(9*t+3),w=V(9*t+6);let n=cross(sub(q,p),sub(w,p));const l=Math.hypot(...n)||1;n=n.map(v=>v/l);
+    [n,p,q,w].forEach(v=>v.forEach(f=>{dv.setFloat32(o,f,true);o+=4}));o+=2;
+  }
+  return new Uint8Array(buf);
+}
+const stlBytes=()=>stlOf(tri('all'));
+function objText(){
+  const s=S.s,f=v=>(v*s).toFixed(3),V=(x,y,z)=>'v '+f(x)+' '+f(-z)+' '+f(y),{pos,idx}=S.L,P=S.P,o=['# Flip Name 3D, units: mm, z up','o letters'];
+  for(let i=0;i<pos.length;i+=3)o.push(V(pos[i],pos[i+1],pos[i+2]));
+  for(let i=0;i<idx.length;i+=3)o.push('f '+(idx[i]+1)+' '+(idx[i+1]+1)+' '+(idx[i+2]+1));
+  const off=pos.length/3;o.push('o base');
+  for(let i=0;i<P.length;i+=3)o.push(V(P[i],P[i+1],P[i+2]));
+  for(let i=0;i<P.length/3;i+=3)o.push('f '+(off+i+1)+' '+(off+i+2)+' '+(off+i+3));
+  return o.join('\n');
+}
+function crc32(u){let c=-1;for(let i=0;i<u.length;i++){c^=u[i];for(let k=0;k<8;k++)c=(c>>>1)^(0xEDB88320&-(c&1))}return(c^-1)>>>0}
+function zipMany(files){
+  const te=new TextEncoder(),parts=[],cds=[];let off=0,cdSize=0;
+  for(const f of files){
+    const nb=te.encode(f.name),crc=crc32(f.data),sz=f.data.length,lh=new DataView(new ArrayBuffer(30)),ch=new DataView(new ArrayBuffer(46));
+    lh.setUint32(0,0x04034b50,true);lh.setUint16(4,20,true);lh.setUint16(12,33,true);lh.setUint32(14,crc,true);lh.setUint32(18,sz,true);lh.setUint32(22,sz,true);lh.setUint16(26,nb.length,true);
+    ch.setUint32(0,0x02014b50,true);ch.setUint16(4,20,true);ch.setUint16(6,20,true);ch.setUint16(14,33,true);ch.setUint32(16,crc,true);ch.setUint32(20,sz,true);ch.setUint32(24,sz,true);ch.setUint16(28,nb.length,true);ch.setUint32(42,off,true);
+    parts.push(lh,nb,f.data);cds.push(ch,nb);off+=30+nb.length+sz;cdSize+=46+nb.length;
+  }
+  const ed=new DataView(new ArrayBuffer(22));
+  ed.setUint32(0,0x06054b50,true);ed.setUint16(8,files.length,true);ed.setUint16(10,files.length,true);ed.setUint32(12,cdSize,true);ed.setUint32(16,off,true);
+  return new Blob([...parts,...cds,ed],{type:'application/zip'});
+}
+// Inside claude.ai the page saves .zip files (the viewer only allows certain file types); opened as a normal file, the STL saves directly.
+const framed=!!window.claude;let dls=null;
+if(framed)claude.use('downloads').then(d=>{dls=d;if(d)$('dl').textContent='Download STL (.zip)';else{$('dl').disabled=$('ed').disabled=true;$('dl').textContent='Download unavailable here'}}).catch(()=>{});
+const nameBase=()=>(($('a').value+'-'+$('b').value).replace(/[^\p{L}\p{N}-]/gu,'')||'flip-name').slice(0,40);
+const ready=()=>{if(S||(check()&&build()))return true;$('info').textContent='Enter both names first.';return false};
+const anchor=(blob,name)=>{const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click()};
+async function saveBlob(name,blob){
+  try{if(framed){if(dls)await dls.save({filename:name,data:blob})}else anchor(blob,name)}
+  catch(e){if(e&&e.code!=='declined')$('info').textContent='Could not save: '+(e.message||e.code)}
+}
+$('dl').onclick=async()=>{
+  if(!ready())return;const b=nameBase();
+  if(framed)await saveBlob(b+'.zip',zipMany([{name:b+'.stl',data:stlBytes()}]));
+  else anchor(new Blob([stlBytes()],{type:'model/stl'}),b+'.stl');
+};
+// Editable files for Tinkercad, Fusion 360, Blender, etc.
+$('ed').onclick=async()=>{
+  if(!ready())return;const b=nameBase(),te=new TextEncoder();
+  const txt='Flip Name 3D - editable files\n\n'+b+'.obj : whole model (letters + base), import into Tinkercad, Fusion 360, Blender, etc.\n'+
+    b+'-letters.stl and '+b+'-base.stl : separate parts, so you can edit or color them independently.\nUnits are millimetres, Z is up.\n\nTinkercad: Import > choose the .obj (or an .stl) > set the scale to 100% > Import.\n';
+  await saveBlob(b+'-editable.zip',zipMany([{name:b+'.obj',data:te.encode(objText())},{name:b+'-letters.stl',data:stlOf(tri('L'))},{name:b+'-base.stl',data:stlOf(tri('P'))},{name:'README.txt',data:te.encode(txt)}]));
+};
+</script></body></html>
