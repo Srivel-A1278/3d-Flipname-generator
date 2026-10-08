@@ -49,5 +49,5 @@ The STL is a single color. For different colors per letter:
 
 ---
 
-Created by **KLINTECH**
+Created by **SRIVELTECH**
 © 2026 A.Srivel. All rights reserved.
